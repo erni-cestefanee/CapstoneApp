@@ -1,160 +1,224 @@
 /* Basic layout */
 .employee-dashboard{
-	display: flex;
-	min-height: 100vh;
-	font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .side-nav{
-	width: 220px;
-	background: #0b3b66;
-	color: white;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	padding: 20px 12px;
-	position: fixed;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	height: 100vh;
-	z-index: 30;
-	box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+    width: 220px;
+    background: #0b3b66;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    z-index: 30;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+
+    /* default visible; toggling classes will hide/show */
+    transform: translateX(0);
+    transition: transform 260ms cubic-bezier(.2,.9,.2,1), opacity 200ms;
 }
 
+/* closed state (hidden off-canvas) */
+.side-nav.mobile-closed {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* open state */
+.side-nav.mobile-open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* overlay that appears behind the nav */
+.nav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 25;
+    opacity: 0;
+    transition: opacity 200ms;
+    pointer-events: none;
+}
+
+.nav-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* keep existing internal styles */
 .side-nav .logo{
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 12px;
-	margin-bottom: 12px;
-	text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    text-align: center;
 }
 
 .erni-logo{
-	width: 110px;
-	height: auto;
-	display: block;
+    width: 110px;
+    height: auto;
+    display: block;
 }
 
 .welcome-text{
-	color: #ffffff;
-	font-size: 18px;
-	font-weight: 600;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
 }
 
 .side-nav nav{
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .nav-btn{
-	background: transparent;
-	border: none;
-	color: white;
-	padding: 10px 12px;
-	text-align: left;
-	border-radius: 6px;
-	cursor: pointer;
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
 .nav-btn:hover{
-	background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.06);
 }
 
 .nav-btn.active{
-	background: #ffd166;
-	color: #0b3b66;
-	font-weight: 600;
+    background: #ffd166;
+    color: #0b3b66;
+    font-weight: 600;
 }
 
 .nav-btn.logout{
-	background: transparent;
-	border: 1px solid rgba(255,255,255,0.12);
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
 }
 
 .side-footer{
-	margin-top: 20px;
+    margin-top: 20px;
 }
 
 .dashboard-main{
-	flex: 1;
-	padding: 28px;
-	background: #f6f8fa;
-	margin-left: 220px; /* leave space for fixed sidebar */
-	min-height: 100vh;
+    flex: 1;
+    padding: 28px;
+    background: #f6f8fa;
+    margin-left: 220px; /* leave space for fixed sidebar — this does not auto-adjust */
+    min-height: 100vh;
 }
 
 .cards-grid{
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-	gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
 }
 
 .card{
-	background: white;
-	border-radius: 12px;
-	padding: 18px;
-	box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
 }
 
 .card h3{
-	margin-top: 0;
+    margin-top: 0;
 }
 
 .card-content{
-	margin-top: 12px;
+    margin-top: 12px;
 }
 
 .leave-count{
-	font-size: 48px;
-	font-weight: 700;
-	color: #0b3b66;
+    font-size: 48px;
+    font-weight: 700;
+    color: #0b3b66;
 }
 
 .leave-label{
-	color: #6b7280;
+    color: #6b7280;
 }
 
 .upcoming-list ul{
-	list-style: none;
-	padding-left: 0;
-	margin: 0;
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
 }
 
 .upcoming-list li{
-	padding: 10px 0;
-	border-bottom: 1px dashed #e5e7eb;
+    padding: 10px 0;
+    border-bottom: 1px dashed #e5e7eb;
 }
 
 .upcoming-list li:last-child{
-	border-bottom: none;
+    border-bottom: none;
 }
 
 .dates{
-	color: #6b7280;
-	font-size: 13px;
+    color: #6b7280;
+    font-size: 13px;
 }
 
 .placeholder{
-	background: white;
-	padding: 20px;
-	border-radius: 8px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
 }
 
+/* Hamburger button — visible on all sizes (desktop + mobile) */
+.hamburger-btn {
+    display: block;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 40;
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    border: 0;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* simple three-line icon */
+.hamburger-btn .bar {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: white;
+    margin: 3px 0;
+    transition: transform 160ms ease, opacity 160ms ease;
+}
+
+/* small-screen adjustments */
 @media (max-width: 720px){
-	.employee-dashboard{flex-direction: column}
-	.side-nav{
-		position: static;
-		width: 100%;
-		height: auto;
-		flex-direction: row;
-		align-items: center;
-		gap: 12px;
-		padding: 12px;
-	}
-	.side-nav nav{flex-direction:row}
-	.nav-btn{padding:8px}
-	.dashboard-main{margin-left:0;padding-top:12px}
+    .employee-dashboard{flex-direction: column}
+    .side-nav{
+        width: 260px; /* slightly wider on mobile */
+    }
+    .side-nav nav{flex-direction:column}
+    .nav-btn{padding:8px}
+    .dashboard-main{margin-left:0;padding-top:12px}
+}
+
+/* on large screens we keep the nav visible by default; toggling still works */
+@media (min-width: 721px){
+    /* dashboard-main keeps left margin so content won't reflow automatically.
+       If you want content to expand when the nav is closed, we'll add logic to toggle a class
+       on the top-level container; I can add that if you want. */
 }

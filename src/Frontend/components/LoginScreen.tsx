@@ -2,6 +2,7 @@ import './styles/LoginScreen.css';
 
 import React, { useEffect, useState } from 'react';
 
+import erniLogo from '../assets/ERNI logo.png';
 import { supabase } from '../lib/supabaseClient';
 
 type LoginScreenProps = {
@@ -198,50 +199,65 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   };
 
   return (
-   
-    <div>
-      <div className="Pausepoint">
-        <span className="pausepoint-text">PausePoint</span>
-        <div className="BackgroundLogo">
-          <div className="BGtext">
-            <div className="login-container">
-              <h2 style={{ textAlign: 'center', fontWeight: '600', color: '#113372' }}>Login</h2>
+    <div className="login-wrapper">
+      {/* Left Side - ERNI Branding */}
+      <div className="login-left-side">
+        <div className="login-brand-container">
+          <img 
+            src={erniLogo} 
+            alt="ERNI Logo" 
+            className="login-erni-logo"
+          />
+          <h1 className="login-brand-title">PausePoint</h1>
+          <p className="login-brand-subtitle">Manage your time off with ease</p>
+        </div>
+      </div>
 
-              {errorMessage && (
-                <div style={{
-                  textAlign: 'center',
-                  color: '#d32f2f',
-                  backgroundColor: '#ffebee',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  marginBottom: '16px'
-                }}>
-                  {errorMessage}
-                </div>
-              )}
+      {/* Right Side - Login Form */}
+      <div className="login-right-side">
+        <div className="login-form-container">
+          <h2 className="login-title">Sign in</h2>
+          <p className="login-subtitle">Welcome back! Please sign in to continue</p>
 
-              {showConfirm && (
-                <div style={{ textAlign: 'center', color: '#0b3b66' }}>
-                  Login successful — redirecting...
-                </div>
-              )}
-
-              <p style={{ textAlign: 'center', color: '#666' }}>
-                Sign in with your Microsoft account
-              </p>
-
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-                <button onClick={handleLogin} type="button" disabled={processing}>
-                  {processing ? 'Redirecting to Microsoft...' : 'Sign in with Microsoft'}
-                </button>
-              </div>
-
+          {errorMessage && (
+            <div className="login-error-message">
+              {errorMessage}
             </div>
+          )}
+
+          {showConfirm && (
+            <div className="login-success-message">
+              Login successful — redirecting...
+            </div>
+          )}
+
+          <button 
+            onClick={handleLogin} 
+            type="button" 
+            disabled={processing}
+            className="login-microsoft-button"
+          >
+            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 0H0V10H10V0Z" fill="#F25022"/>
+              <path d="M21 0H11V10H21V0Z" fill="#7FBA00"/>
+              <path d="M10 11H0V21H10V11Z" fill="#00A4EF"/>
+              <path d="M21 11H11V21H21V11Z" fill="#FFB900"/>
+            </svg>
+            <span>{processing ? 'Redirecting to Microsoft...' : 'Sign in with Microsoft'}</span>
+          </button>
+
+          <div className="login-divider">
+            <div className="login-divider-line"></div>
+            <p className="login-divider-text">Secure authentication via Azure AD</p>
+            <div className="login-divider-line"></div>
           </div>
+
+          <p className="login-info-text">
+            Your Microsoft credentials are used to authenticate and access the application securely.
+          </p>
         </div>
       </div>
     </div>
-   
   );
 };
 

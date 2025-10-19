@@ -1,164 +1,397 @@
-/* src/Frontend/components/LoginScreen.css
-   Clean, conflict-free animated background + login card styles
-*/
-
-/* top-level vars for easy tuning */
+/* Modern full-screen two-column login layout */
 :root {
-  --login-bg-from: #f6f4f1;  /* dirty-white start */
-  --login-bg-to: #3B6EA5;    /* accent end */
-  --login-bg-speed: 9s;      /* animation duration */
-  --login-bg-angle: 135deg;  /* gradient direction */
-  --login-sheen-opacity: 0.06; /* subtle sheen on container */
+  --login-primary: #1e3a8a;
+  --login-secondary: #2563eb;
+  --login-accent: #004693;
+  --login-bg: #ffffff;
+  --login-text-primary: #111827;
+  --login-text-secondary: #6b7280;
+  --login-border: #e5e7eb;
+  --login-error: #dc2626;
+  --login-success: #059669;
 }
 
-/* Apply this class to <body> while LoginScreen is mounted */
+/* Remove body margins and ensure full viewport */
 body.login-bg {
-  min-height: 100vh;
   margin: 0;
   padding: 0;
-  background: linear-gradient(var(--login-bg-angle), var(--login-bg-from) 0%, var(--login-bg-to) 100%);
-  background-size: 300% 300%;
-  animation: login-gradient-shift var(--login-bg-speed) ease-in-out infinite;
-}
-
-/* keyframes: smooth slow shift */
-@keyframes login-gradient-shift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Background logo container (full-bleed positioning) */
-.BackgroundLogo {
-  background-image: url('../../assets/ERNI logo.png');
-  background-size: 600px;
-  background-position: 700px 50px;
-  background-repeat: no-repeat;
+  overflow: hidden;
   height: 100vh;
   width: 100vw;
-  position: relative;
 }
 
-/* Pausepoint block with local logo/text background */
-.Pausepoint {
-  position: relative;
-  z-index: 70; /* ensure text sits above container sheen */
+/* Main wrapper - full viewport, no container */
+.login-wrapper {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Left side - ERNI branding - FULL HEIGHT with animated gradient */
+.login-left-side {
+  width: 50%;
+  height: 100vh;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb, #3b82f6, #60a5fa, #93c5fd, #3b82f6, #2563eb, #1e40af, #1e3a8a);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease-in-out infinite;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background-image: url('../../assets/ERNI logo.png');
-  background-position: 30px 175px;
-  background-repeat: no-repeat;
-  background-size: 75px;
-  min-height: 220px;
-  padding-top: 20px;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Text that sits next to the logo; adjust transform for pixel nudges */
-.pausepoint-text {
-  position: absolute;
-  left: 110px; /* tweak if needed */
-  top: 220px;  /* tweak if needed */
-  transform: translateY(-50%); /* vertical centering relative to given top */
-  font-weight: 600;            /* valid weight */
-  font-family: 'Lexend', sans-serif;
-  font-size: 48px;
-  color: #113372;
-  pointer-events: none;
+/* Gradient animation keyframes - smooth flowing movement */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 25%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 75%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
-/* Secondary background text area (if you use ERNI text image) */
-.BGtext {
-  background-image: url('../../assets/ERNI text.png');
-  text-align: center;
-  background-size: 400px;
-  background-position: 750px 700px;
-  background-repeat: no-repeat;
-  position: absolute;
-  height: 100vh;
-  width: 100vw;
-}
-
-/* Ensure login container sits above animated background */
-.login-container {
- position: absolute;
-  top: 50%;
-  left: 10%;
-  transform: translate(-50%,-50%); /* exact center */
-  z-index: 50;
-  max-width: 460px;
-  width: calc(100% - 48px);         /* leave small gutters on narrow screens */
-  padding: 28px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.60); /* translucent card to improve contrast */
-  backdrop-filter: blur(4px);          /* subtle glass effect (optional) */
-  box-shadow: 0 8px 30px rgba(12, 20, 30, 0.12);
-  text-align: left;
-}
-
-/* gentle sheen overlay inside the card for extra polish */
-.login-container::before {
+/* Subtle pattern overlay */
+.login-left-side::before {
   content: "";
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255,255,255,var(--login-sheen-opacity)), rgba(255,255,255,0));
-  border-radius: 10px;
-  z-index: 60;
+  background-image: 
+    linear-gradient(30deg, rgba(255,255,255,0.03) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.03) 87.5%, rgba(255,255,255,0.03)),
+    linear-gradient(150deg, rgba(255,255,255,0.03) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.03) 87.5%, rgba(255,255,255,0.03));
+  background-size: 80px 140px;
+  background-position: 0 0, 40px 70px;
+  opacity: 0.5;
 }
 
-/* Form / inputs */
-.login-container h2 {
-  margin-bottom: 20px;
+.login-brand-container {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out;
+  padding: 2rem;
 }
 
-.login-container form div {
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
+/* ERNI Logo - With white background for better visibility */
+.login-erni-logo {
+  width: 180px;
+  height: auto;
+  margin: 0 auto 2.5rem auto;
+  display: block;
+  animation: fadeInScale 1s ease-out;
+  background: white;
+  padding: 2rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 }
 
-.login-container label {
-  margin-bottom: 5px;
-  font-weight: 500;
-  text-align: left;
-}
-
-.login-container input,
-.input-field {
-  width: 100%;
-  padding: 8px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-/* Buttons */
-.login-container button {
-  padding: 10px 20px;
-  width: 100%;
-  background-color: #004693;
+.login-brand-title {
+  font-family: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 4rem;
+  font-weight: 600;
   color: white;
-  border: none;
-  border-radius: 4px;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+}
+
+.login-brand-subtitle {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+/* Right side - login form - FULL HEIGHT */
+.login-right-side {
+  width: 50%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+  padding: 0;
+  margin: 0;
+}
+
+.login-form-container {
+  width: 100%;
+  max-width: 440px;
+  padding: 2rem;
+  animation: fadeIn 1s ease-out;
+}
+
+.login-title {
+  font-size: 2.5rem;
+  color: var(--login-text-primary);
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.login-subtitle {
+  font-size: 1rem;
+  color: var(--login-text-secondary);
+  margin: 0 0 3rem 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Error message */
+.login-error-message {
+  background-color: #fee2e2;
+  color: var(--login-error);
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 0.9375rem;
+  border: 1px solid #fecaca;
+  font-weight: 500;
+}
+
+/* Success message */
+.login-success-message {
+  background-color: #d1fae5;
+  color: var(--login-success);
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 0.9375rem;
+  border: 1px solid #a7f3d0;
+  font-weight: 500;
+}
+
+/* Microsoft login button */
+.login-microsoft-button {
+  width: 100%;
+  height: 3.5rem;
+  background-color: white;
+  border: 1.5px solid #d1d5db;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
   cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  color: var(--login-text-primary);
+  font-weight: 500;
+  margin-top: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.login-container button:hover {
-  background-color: #3b6ea5;
+.login-microsoft-button:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Responsive fallback */
-@media (max-width: 720px) {
-  .login-container {
-    margin: 18px;
-    padding: 20px;
-    max-width: calc(100% - 36px);
+.login-microsoft-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-microsoft-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-microsoft-button svg {
+  width: 21px;
+  height: 21px;
+}
+
+/* Divider */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2.5rem 0;
+}
+
+.login-divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--login-border);
+}
+
+.login-divider-text {
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: var(--login-text-secondary);
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* Info text */
+.login-info-text {
+  text-align: center;
+  color: var(--login-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .login-brand-title {
+    font-size: 3.5rem;
+  }
+  
+  .login-erni-logo {
+    width: 160px;
+    padding: 1.75rem 2.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
   }
 
-  .pausepoint-text {
-    font-size: 36px;
-    left: 90px;
-    top: 160px;
+  .login-left-side {
+    width: 100vw;
+    height: 35vh;
+    min-height: 280px;
+  }
+
+  .login-brand-container {
+    padding: 1.5rem;
+  }
+
+  .login-erni-logo {
+    width: 120px;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem 2rem;
+  }
+
+  .login-brand-title {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .login-brand-subtitle {
+    font-size: 1rem;
+  }
+
+  .login-right-side {
+    width: 100vw;
+    height: 65vh;
+  }
+
+  .login-form-container {
+    max-width: 100%;
+    padding: 2rem 1.5rem;
+  }
+
+  .login-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-left-side {
+    height: 30vh;
+    min-height: 240px;
+  }
+
+  .login-brand-container {
+    padding: 1rem;
+  }
+
+  .login-erni-logo {
+    width: 100px;
+    margin-bottom: 1rem;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .login-brand-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-brand-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .login-right-side {
+    height: 70vh;
+  }
+
+  .login-form-container {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .login-title {
+    font-size: 1.75rem;
+  }
+
+  .login-subtitle {
+    font-size: 0.875rem;
+    margin-bottom: 2rem;
+  }
+
+  .login-microsoft-button {
+    height: 3rem;
+    font-size: 0.9375rem;
+  }
+
+  .login-info-text {
+    font-size: 0.875rem;
   }
 }
