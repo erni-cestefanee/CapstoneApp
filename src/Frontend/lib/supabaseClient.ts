@@ -9,4 +9,13 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey);
 
+// In dev only: attach to window for easy debugging from the browser console
+if (import.meta.env.DEV) {
+  try {
+    (window as any).supabase = supabase;
+  } catch (e) {
+    // ignore in non-browser contexts
+  }
+}
+
 export default supabase;

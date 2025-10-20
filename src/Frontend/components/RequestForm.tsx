@@ -11,6 +11,7 @@ import './styles/RequestForm.css';
 import './styles/LeaveRequests.css';
 import { useMsal } from '@azure/msal-react';
 import { type SavedLeaveRequest, type LeaveType } from './types';
+import supabase from '../lib/supabaseClient';
 
 const STORAGE_KEY = 'capstone_leave_requests_v1';
 
@@ -46,6 +47,7 @@ const RequestForm = forwardRef<RequestFormHandle, RequestFormProps>((props, ref)
   const [reason, setReason] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -89,6 +91,49 @@ const RequestForm = forwardRef<RequestFormHandle, RequestFormProps>((props, ref)
         days,
         submittedAt: new Date().toISOString(),
       };
+
+      // Insert into leave_applications in the database
+      try {
+        const userResp = await supabase.auth.getUser();
+        const uid = (userResp as any)?.data?.user?.id as string | undefined;
+        if (!uid) throw new Error('No authenticated supabase user session');
+
+        const insertPayload = {
+          user_id: uid,
+          start_date: new Date(from).toISOString(),
+          end_date: new Date(to).toISOString(),
+          reason: reason.trim(),
+          status: 'pending',
+          approver_id: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          leave_type: type,
+        };
+
+        // debug: log payload and uid
+        console.debug('Attempting DB insert', { uid, insertPayload });
+        setDbError(null);
+
+        const { data: insertData, error: insertError } = await supabase
+          .from('leave_applications')
+          .insert([insertPayload])
+          .select()
+          .maybeSingle();
+
+        if (insertError) {
+          console.error('DB insert error', insertError);
+          setDbError(insertError.message ?? String(insertError));
+          // surface to UI
+          setMessage('Leave request saved locally but failed to send to server: ' + (insertError.message ?? String(insertError)));
+        } else {
+          console.debug('DB insert success', insertData);
+          setMessage(`Leave request submitted (${days} day${days === 1 ? '' : 's'}).`);
+        }
+      } catch (dbErr: any) {
+        console.error('Failed to insert leave application', dbErr);
+        setDbError(dbErr?.message ?? String(dbErr));
+        setMessage('Leave request saved locally but failed to send to server: ' + (dbErr?.message ?? String(dbErr)));
+      }
 
       // read existing saved from localStorage, prepend new
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -295,6 +340,11 @@ const RequestForm = forwardRef<RequestFormHandle, RequestFormProps>((props, ref)
           </div>
 
           {message && <div className="message">{message}</div>}
+          {dbError && (
+            <div className="error" style={{ marginTop: 8 }}>
+              Server error: {dbError}
+            </div>
+          )}
         </form>
       </div>
     </div>
