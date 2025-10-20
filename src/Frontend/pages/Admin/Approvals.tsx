@@ -1,13 +1,11 @@
 // src/Frontend/pages/Admin/Approvals.tsx
 
+import { useEffect, useMemo, useState } from 'react';
 import './styles/Approvals.css';
-
-import { useEffect, useState } from 'react';
 
 import RoleChecker from '../../components/nav/RoleChecker';
 import supabase from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/AuthContext';
-import { useMemo } from 'react';
 
 type Profile = { roles?: any; role?: any; app_metadata?: any; email?: string; display_name?: string };
 

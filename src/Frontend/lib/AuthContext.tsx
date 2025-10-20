@@ -143,6 +143,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+        // Ensure a minimal users row exists so UI components can read display_name/email
+        try {
+          const fallbackDisplay = supUser.email ?? supUser.user_metadata?.full_name ?? supUser.user_metadata?.name ?? null;
+          // try to pull name parts from MSAL id token claims if available
+          const msalAccount = accounts?.[0] ?? null;
+          const givenName = (msalAccount as any)?.idTokenClaims?.given_name ?? supUser.user_metadata?.given_name ?? supUser.user_metadata?.first_name ?? null;
+          const surname = (msalAccount as any)?.idTokenClaims?.family_name ?? supUser.user_metadata?.family_name ?? supUser.user_metadata?.last_name ?? null;
+
+          // upsert silently to avoid blocking UI; include given_name/surname when available
+          const upsertPayload: any = { id: supUser.id, email: supUser.email, display_name: fallbackDisplay };
+          if (givenName) upsertPayload.given_name = givenName;
+          if (surname) upsertPayload.surname = surname;
+
+          await supabase.from('users').upsert(upsertPayload, { onConflict: 'id' });
+        } catch (e) {
+          // ignore upsert errors (roles/other constraints may apply)
+          console.debug('users upsert failed', e);
+        }
+
       // try to find by id or email
       const profile = await loadProfileFromSupabase({ authUserId: supUser.id, email: supUser.email });
       if (profile) {
