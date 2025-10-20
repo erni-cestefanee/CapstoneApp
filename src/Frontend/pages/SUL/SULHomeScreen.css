@@ -1,0 +1,42 @@
+/* SUL Home Screen styles (dashboard) */
+.sul-page { padding: 28px; margin-left: 72px; }
+.sul-grid { display: grid; /* make main column wider and maximize space */ grid-template-columns: minmax(720px, 1fr) 320px; gap: 28px; align-items: start; }
+.card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 6px 18px rgba(15,31,45,0.04); border: 1px solid rgba(15,31,45,0.04); }
+.card-title { font-weight: 700; color: #123a75; margin-bottom: 6px; }
+.card-sub { color: #6b7280; font-size: 13px; margin-bottom: 12px; }
+
+.balances { min-height: 220px; }
+.main-col { max-width: 980px; }
+.balances-list { display: flex; flex-direction: column; gap: 10px; }
+.balance-row { display: flex; align-items: center; background: #fbfdff; border-radius: 8px; padding: 10px; }
+.balance-dot { width: 10px; height: 30px; border-radius: 6px; margin-right: 12px; }
+.balance-label { flex: 1; font-weight: 600; }
+.balance-value { color: #4b5563; font-weight: 700; }
+
+.right-col { display: flex; flex-direction: column; gap: 12px; }
+.apply-btn { background: linear-gradient(180deg,#2b6ea3,#1f5588); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; align-self: flex-end; }
+.create-btn { background: #ffffff; color: #1f5588; border: 2px solid #d0e3f5; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; align-self: flex-end; }
+
+.quick-stats .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; }
+.teams-card .team-list { display: flex; flex-direction: column; gap: 8px; }
+.team-pill { background: #f3f7fb; padding: 8px 12px; border-radius: 8px; color: #123a75; font-weight: 600; }
+
+.join-card .join-list { display: flex; flex-direction: column; gap: 8px; }
+.join-row { display: flex; justify-content: space-between; align-items: center; }
+.join-name { background: #f3f7fb; padding: 8px 12px; border-radius: 8px; flex: 1; }
+.join-btn { background: #1f5588; color: white; border: none; padding: 6px 10px; border-radius: 8px; margin-left: 8px; cursor: pointer; }
+
+.upcoming-card { width: 95%; margin-top: 12px; }
+.upcoming-table { width: 100%; border-collapse: collapse; }
+.upcoming-table thead th { background: #1f5588; color: white; padding: 10px; text-align: left; }
+.upcoming-table td { padding: px; border-bottom: 1px solid #f0f4f8; }
+.status-dot { font-weight: 700; }
+.status-dot.approved { color: #2ea043; }
+.status-dot.pending { color: #ff9a4a; }
+.status-dot.declined { color: #d9534f; }
+
+@media (max-width: 980px) {
+  .sul-grid { grid-template-columns: 1fr; }
+  .right-col { order: 3; }
+  .upcoming-card { grid-column: 1; }
+}

@@ -1,0 +1,78 @@
+/* Approvals page styles - basic visual match for the provided mockup */
+
+.approvals-header {
+  background: #123a75; /* deep blue banner */
+  color: #fff;
+  text-align: center;
+  padding: 18px 0;
+  font-size: 24px;
+  font-weight: 600;
+  border-bottom: 4px solid rgba(255,255,255,0.04);
+}
+
+.approvals-card {
+  background: #f7f8fa;
+  border: 2px solid #2b6ea3;
+  border-radius: 12px;
+  padding: 18px;
+  margin: 20px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.approvals-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.approvals-card-top h2 {
+  margin: 0 0 4px 0;
+}
+
+.muted { color: #777; font-size: 13px; }
+
+.approvals-search input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d0d7df;
+  width: 220px;
+}
+
+.approvals-table-wrap { overflow: auto; }
+.approvals-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.approvals-table thead th {
+  background: #3b78a8;
+  color: #fff;
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 600;
+}
+
+.approvals-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  vertical-align: middle;
+}
+
+.approvals-table tbody tr:nth-child(odd) { background: rgba(0,0,0,0.02); }
+
+.actions-cell { width: 160px; }
+.btn {
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 8px;
+}
+.btn.approve { background: #2ea043; color: white; }
+.btn.decline { background: #d9534f; color: white; }
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  .approvals-card { padding: 12px; }
+  .approvals-search input { width: 140px; }
+  .approvals-table { min-width: 700px; }
+}

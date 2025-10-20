@@ -43,7 +43,15 @@
 .btn.small { padding:6px 10px; border-radius:10px; background:#2e6aa0; color:white; border:none; cursor:pointer }
 
 /* Apply button larger and pill-like to match mock */
-.apply-btn { background: linear-gradient(180deg,#2e6aa0,#1f4f7a); color: white; box-shadow: 0 10px 22px rgba(46,106,160,0.14); font-size: 15px; display: inline-block; padding: 12px 18px; border-radius: 12px; font-weight:700; }
+.apply-btn {
+   background: linear-gradient(180deg,#2e6aa0,#1f4f7a);
+   color: white;
+   box-shadow: 0 10px 22px rgba(46,106,160,0.14);
+   font-size: 15px; display: inline-block;
+   padding: 12px 18px;
+   border-radius: 12px;
+   font-weight:700;
+  }
 
 .filter-panel {
   background: transparent;
