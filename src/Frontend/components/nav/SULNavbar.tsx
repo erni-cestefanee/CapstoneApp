@@ -57,6 +57,7 @@ export default function SULNavbar({ onLogout, userName, userEmail }: Props) {
   return (
     <>
       {/* Hamburger (visible on all sizes) */}
+      {/*
       <button
         className="hamburger-btn"
         aria-label={open ? 'Close navigation' : 'Open navigation'}
@@ -68,13 +69,14 @@ export default function SULNavbar({ onLogout, userName, userEmail }: Props) {
         <span className="bar" style={{ opacity: open ? 0 : 1 }} />
         <span className="bar" style={{ transform: open ? 'rotate(-45deg) translate(3px, -3px)' : undefined }} />
       </button>
-
+      */}
       {/* Overlay */}
+      {/*
       <div
         className={`nav-overlay ${open ? 'visible' : ''}`}
         onClick={() => setOpen(false)}
-        aria-hidden={!open}
-      />
+        aria-hidden={!open}   
+      />   */}
 
       <aside
         id="sul-side-nav"

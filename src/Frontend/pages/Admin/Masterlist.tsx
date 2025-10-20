@@ -1,10 +1,11 @@
+import './styles/Masterlist.css';
+
 import { useEffect, useState } from 'react';
 
-import React from 'react';
-import './styles/Masterlist.css';
 import DeletePng from '../../assets/Delete Button.png';
 import DetailsPng from '../../assets/Details Icon.png';
 import EditPng from '../../assets/Edit Icon.png';
+import React from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
 type UserRow = {

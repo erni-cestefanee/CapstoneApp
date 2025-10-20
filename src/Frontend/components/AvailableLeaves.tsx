@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
 import './styles/AvailableLeaves.css';
 import './styles/ActivityLog.css';
+
+import React, { useEffect, useMemo, useState } from 'react';
 
 import supabase from '../lib/supabaseClient';
 import { useAuth } from '../lib/AuthContext';
@@ -63,7 +64,7 @@ const AvailableLeaves: React.FC = () => {
         // fetch single-row balances for this user and year
         const { data, error: qErr } = await supabase
           .from('leave_balances')
-          .select('id, user_id, holiday_balance, birthday_balance, sick_balance, vacation_balance, parental_balance, year')
+          .select('id, user_id, holiday_balance, holiday_allotted, birthday_balance, birthday_allotted, sick_balance, sick_allotted, vacation_balance, vacation_allotted, parental_balance, parental_allotted, year')
           .eq('user_id', userUuid)
           .eq('year', year as any)
           .limit(1)
@@ -73,11 +74,11 @@ const AvailableLeaves: React.FC = () => {
 
         if (data) {
           const mapped: LeaveItem[] = [
-            { key: 'holiday_balance', label: 'Holiday Leave', balance: data.holiday_balance ?? 0, allotted: 15 },
-            { key: 'birthday_balance', label: 'Birthday Leave', balance: data.birthday_balance ?? 0, allotted: 1 },
-            { key: 'sick_balance', label: 'Sick Leave', balance: data.sick_balance ?? 0, allotted: 15 },
-            { key: 'vacation_balance', label: 'Vacation Leave', balance: data.vacation_balance ?? 0, allotted: 15 },
-            { key: 'parental_balance', label: 'Parental Leave', balance: data.parental_balance ?? 0, allotted: 130 },
+            { key: 'holiday_balance', label: 'Holiday Leave', balance: data.holiday_balance ?? 0, allotted: data.holiday_allotted },
+            { key: 'birthday_balance', label: 'Birthday Leave', balance: data.birthday_balance ?? 0, allotted: data.birthday_allotted },
+            { key: 'sick_balance', label: 'Sick Leave', balance: data.sick_balance ?? 0, allotted: data.sick_allotted },
+            { key: 'vacation_balance', label: 'Vacation Leave', balance: data.vacation_balance ?? 0, allotted: data.vacation_allotted },
+            { key: 'parental_balance', label: 'Parental Leave', balance: data.parental_balance ?? 0, allotted: data.parental_allotted },
           ];
           if (mounted) setItems(mapped);
         } else {

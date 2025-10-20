@@ -51,7 +51,7 @@ export default function CXNavbar({ onLogout, userName, userEmail }: Props) {
   };
 
   return (
-    <>
+    <>{/*
       <button
         className="hamburger-btn"
         aria-label={open ? 'Close navigation' : 'Open navigation'}
@@ -69,6 +69,7 @@ export default function CXNavbar({ onLogout, userName, userEmail }: Props) {
         onClick={() => setOpen(false)}
         aria-hidden={!open}
       />
+      */}
 
       <aside
         id="cx-side-nav"
