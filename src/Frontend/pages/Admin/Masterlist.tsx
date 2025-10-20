@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import DeletePng from '../../assets/Delete Button.png';
 import DetailsPng from '../../assets/Details Icon.png';
 import EditPng from '../../assets/Edit Icon.png';
+import MasterEdit from './MasterEdit';
 import React from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -26,7 +27,8 @@ export default function Masterlist(): React.ReactElement {
   const [roleFilter, setRoleFilter] = useState('All');
   const [detailsUser, setDetailsUser] = useState<UserRow | null>(null);
   const [editUser, setEditUser] = useState<UserRow | null>(null);
-  const [editRole, setEditRole] = useState('');
+  
+  const [showMasterEdit, setShowMasterEdit] = useState(false);
 
   const ADMIN_FN_URL = import.meta.env.VITE_ADMIN_FN_URL as string | undefined;
 
@@ -126,10 +128,7 @@ export default function Masterlist(): React.ReactElement {
     }
   }
 
-  async function assignRole(userId: string, role: string) {
-    if (!confirm(`Assign role "${role}" to this user?`)) return;
-    await performAction({ action: 'add_role', target_user: userId, role }, `Role "${role}" assigned`);
-  }
+  
 
   async function deleteUser(userId: string) {
     if (!confirm('Permanently delete this user? This cannot be undone.')) return;
@@ -230,7 +229,7 @@ export default function Masterlist(): React.ReactElement {
                                 <img src={DetailsPng} alt="Details" className="action-img" />
                               </button>
 
-                              <button className="icon-btn" title="Edit role" onClick={() => { setEditUser(u); setEditRole((u.roles && u.roles[0]) || ''); }}>
+                              <button className="icon-btn" title="Edit" onClick={() => { setEditUser(u); setShowMasterEdit(true); }}>
                                 <img src={EditPng} alt="Edit" className="action-img" />
                               </button>
 
@@ -265,27 +264,24 @@ export default function Masterlist(): React.ReactElement {
         </div>
       )}
 
-      {/* Edit modal */}
-      {editUser && (
-        <div className="modal-backdrop" onClick={() => setEditUser(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit role</h3>
-            <div style={{ marginTop: 8 }}>
-              <select value={editRole} onChange={(e) => setEditRole(e.target.value)}>
-                <option value="">-- select role --</option>
-                <option value="admin">admin</option>
-                <option value="employee">employee</option>
-                <option value="SUL">SUL</option>
-                <option value="PL">PL</option>
-                <option value="CX">CX</option>
-              </select>
-            </div>
-            <div style={{ marginTop: 12 }}>
-              <button onClick={() => { if (editRole) { assignRole(editUser.id, editRole); setEditUser(null); } }}>Save</button>
-              <button onClick={() => setEditUser(null)} style={{ marginLeft: 8 }}>Cancel</button>
-            </div>
-          </div>
-        </div>
+      {/* Master edit modal */}
+      {showMasterEdit && editUser && (
+        <MasterEdit
+          user={editUser}
+          onClose={() => { setShowMasterEdit(false); setEditUser(null); }}
+          onSave={async (updates: any) => {
+            // updates contains id, role and leave fields
+            const payload: Record<string, any> = { action: 'update_user', target_user: updates.id };
+            if (updates.role) payload.role = updates.role;
+            // copy leave balance and allotted fields
+            ['holiday_balance','birthday_balance','sick_balance','vacation_balance','parental_balance','holiday_allotted','birthday_allotted','sick_allotted','vacation_allotted','parental_allotted'].forEach((k) => {
+              if (updates[k] !== undefined) payload[k] = updates[k];
+            });
+            // include year so the admin function can target the correct leave_balances row
+            payload.year = new Date().getFullYear();
+            await performAction(payload, 'User updated');
+          }}
+        />
       )}
     </section>
   );

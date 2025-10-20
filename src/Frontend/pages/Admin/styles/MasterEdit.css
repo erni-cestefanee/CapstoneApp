@@ -1,0 +1,48 @@
+.masteredit-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,20,40,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1400;
+}
+.masteredit-modal {
+  background: #fff;
+  width: 760px;
+  max-width: calc(100% - 40px);
+  border-radius: 10px;
+  box-shadow: 0 20px 40px rgba(12,40,80,0.15);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.masteredit-header { border-bottom: 1px solid #eef6fb; padding-bottom: 8px; margin-bottom: 12px }
+.masteredit-header h3 { margin:0 }
+.masteredit-sub { color:#556; font-size:13px }
+.masteredit-body { display:flex; gap:18px }
+.masteredit-left { flex:1 }
+.masteredit-right { width:340px }
+.leaves-grid { display:grid; grid-template-columns: 1fr 84px; gap:8px 12px; align-items:center }
+.leaves-grid label { color:#334; font-size:14px }
+.leaves-grid input { padding:8px; border-radius:8px; border:1px solid #e6eef7 }
+.masteredit-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:12px }
+.btn-cancel { background:transparent; border:1px solid #d6dbe2; padding:8px 12px; border-radius:8px }
+.btn-save { background:#2e6aa0; color:white; border:none; padding:8px 12px; border-radius:8px }
+.error { color:#b00020; padding-top:8px }
+
+.btn-save[disabled] { opacity:0.6; cursor:not-allowed }
+.leaves-preview { margin-bottom:10px }
+
+.leaves-preview { list-style:none; padding:0; margin:0 0 12px 0; border-radius:8px; background:#fbfeff; padding:8px }
+.lp-row { display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px dashed #eef4fb }
+.lp-row:last-child { border-bottom:none }
+.lp-label { color:#234; font-weight:600 }
+.lp-balance { color:#234; font-weight:700 }
+
+.leaves-grid-compact { display:flex; flex-direction:column; gap:8px }
+.lg-row { display:flex; justify-content:space-between; align-items:center }
+.lg-label { font-weight:600; color:#223; width:160px }
+.lg-inputs { display:flex; align-items:center; gap:8px }
+.lg-balance-input, .lg-allotted-input { width:70px; padding:6px; border-radius:6px; border:1px solid #e6eef7 }
+.lg-sep { color:#556 }
