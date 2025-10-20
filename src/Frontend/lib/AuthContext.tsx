@@ -6,6 +6,7 @@ import supabase from './supabaseClient'; // adjust path if your client file live
 import { useMsal } from '@azure/msal-react';
 
 type UserShape = {
+  id?: string | null; // uuid from your users table or supabase auth id
   email?: string | null;
   display_name?: string | null;
   roles?: string[] | null;
@@ -49,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (!error && data) {
           return {
+            id: data.id ?? null,
             email: data.email ?? opts.email,
             display_name: data.display_name ?? null,
             roles: Array.isArray(data.roles) ? data.roles : data.roles ?? null,
@@ -67,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (!error && data) {
           return {
+            id: data.id ?? null,
             email: data.email ?? null,
             display_name: data.display_name ?? null,
             roles: Array.isArray(data.roles) ? data.roles : data.roles ?? null,
@@ -118,8 +121,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      setUser(null);
-      setLoading(false);
+  // If users table doesn't have a row for this auth user, include the supabase auth id
+  // so downstream components can use it directly.
+  setUser({ id: supUser.id, email: supUser.email ?? null, display_name: null, roles: null });
+  setLoading(false);
     } catch (err) {
       console.warn('AuthProvider: refresh failed', err);
       setUser(null);
