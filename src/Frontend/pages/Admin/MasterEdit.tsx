@@ -237,7 +237,7 @@ export default function MasterEdit({ user, onClose, onSave }: Props) {
             {loading ? (
               <p>Loading…</p>
             ) : (
-              <>
+              <>{/*}
               <ul className="leaves-preview">
                 {items.map(it => (
                   <li key={it.key} className="lp-row">
@@ -245,7 +245,7 @@ export default function MasterEdit({ user, onClose, onSave }: Props) {
                     <span className="lp-balance">{it.balance} / {it.allotted ?? 'N/A'}</span>
                   </li>
                 ))}
-              </ul>
+              </ul>*/}
 
               <div className="leaves-grid-compact">
                 {items.map(it => {
