@@ -78,58 +78,41 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       console.log('🔍 Fetching user profile from database...');
       
       // Fetch user profile from database to determine role
+      // Using .maybeSingle() instead of .single() to avoid errors when user doesn't exist
       let { data: profile, error } = await supabase
         .from('users')
         .select('roles')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('❌ Error fetching user profile:', error);
+        setErrorMessage('Failed to fetch user profile. Please check your database policies.');
+        setProcessing(false);
+        return;
+      }
+
+      // If no profile found, create a default employee profile
+      if (!profile) {
+        console.log('⚠️ User profile not found, creating default employee profile...');
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            id: userId,
+            email: email,
+            roles: ['employee']
+          })
+          .select('roles')
+          .maybeSingle();
         
-        // If user doesn't exist in users table yet, wait for trigger to complete
-        if (error.code === 'PGRST116') {
-          console.log('⏳ User profile not found, waiting for trigger...');
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-          
-          // Try again
-          const retryResult = await supabase
-            .from('users')
-            .select('roles')
-            .eq('id', userId)
-            .single();
-          
-          if (retryResult.error) {
-            console.error('❌ Error fetching user profile on retry:', retryResult.error);
-            
-            // Last resort: Create the user manually
-            console.log('⚠️ Trigger may have failed, creating user manually...');
-            const { data: newUser, error: createError } = await supabase
-              .from('users')
-              .insert({
-                id: userId,
-                email: email,
-                roles: ['employee']
-              })
-              .select('roles')
-              .single();
-            
-            if (createError) {
-              console.error('❌ Failed to create user:', createError);
-              setErrorMessage('Failed to create user profile. Please contact support.');
-              setProcessing(false);
-              return;
-            }
-            
-            profile = newUser;
-          } else {
-            profile = retryResult.data;
-          }
-        } else {
-          setErrorMessage('Failed to fetch user profile');
+        if (createError) {
+          console.error('❌ Failed to create user:', createError);
+          setErrorMessage('Failed to create user profile. Please contact support.');
           setProcessing(false);
           return;
         }
+        
+        profile = newUser;
       }
 
       // Determine role (case-insensitive). Map 'sul' and 'pl' to the SUL dashboard role.

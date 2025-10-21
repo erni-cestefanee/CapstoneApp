@@ -1,3 +1,4 @@
+// @ts-nocheck
 function parseJwtPayload(jwt) {
   try {
     if (!jwt) return null;
@@ -48,7 +49,7 @@ Deno.serve(async (req) => {
     }
 
     const authHeader = req.headers.get('authorization') || '';
-    const m = authHeader.match(/^Bearer (.+)$/);
+  const m = authHeader.match(/^Bearer\s+(.+)$/);
     if (!m) {
       return new Response(JSON.stringify({ error: 'missing Authorization Bearer token' }), {
         status: 401,

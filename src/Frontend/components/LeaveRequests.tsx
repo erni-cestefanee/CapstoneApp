@@ -100,7 +100,7 @@ export default function LeaveRequests() {
     if (saved.find((s) => s.id === id)) {
       const updated = saved.filter((s) => s.id !== id);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      setSaved(updated);
+        setSaved(updated);
     } else {
       const updatedDemo = demoRows.filter((s) => s.id !== id);
       setDemoRows(updatedDemo);
