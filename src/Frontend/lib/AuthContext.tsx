@@ -6,7 +6,6 @@ import supabase from './supabaseClient'; // adjust path if your client file live
 import { useMsal } from '@azure/msal-react';
 
 type UserShape = {
-  id?: string | null; // uuid from your users table or supabase auth id
   email?: string | null;
   display_name?: string | null;
   roles?: string[] | null;
@@ -22,7 +21,7 @@ type AuthContextShape = {
 const AuthContext = createContext<AuthContextShape | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { accounts } = useMsal(); // MsalProvider must wrap this
+  const { accounts, instance } = useMsal(); // MsalProvider must wrap this
   const [user, setUser] = useState<UserShape | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -50,7 +49,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (!error && data) {
           return {
-            id: data.id ?? null,
             email: data.email ?? opts.email,
             display_name: data.display_name ?? null,
             roles: Array.isArray(data.roles) ? data.roles : data.roles ?? null,
@@ -69,7 +67,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (!error && data) {
           return {
-            id: data.id ?? null,
             email: data.email ?? null,
             display_name: data.display_name ?? null,
             roles: Array.isArray(data.roles) ? data.roles : data.roles ?? null,
@@ -91,6 +88,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const msalEmail = resolveMsalEmail(msalAccount);
 
       if (msalAccount && msalEmail) {
+        // Try to exchange MSAL id_token for a Supabase session so
+        // supabase.auth.getUser() returns a session and client-side RLS policies work.
+        try {
+          // acquire an id_token from MSAL silently; fall back to popup if needed
+          let authResult: any = null;
+          try {
+            authResult = await (instance as any).acquireTokenSilent({ account: msalAccount, scopes: ['openid', 'profile', 'email'] });
+          } catch (silentErr) {
+            try {
+              authResult = await (instance as any).acquireTokenPopup({ scopes: ['openid', 'profile', 'email'] });
+            } catch (popupErr) {
+              console.warn('MSAL token acquisition failed', silentErr, popupErr);
+              authResult = null;
+            }
+          }
+
+          const idToken = authResult?.idToken ?? authResult?.id_token ?? (msalAccount as any)?.idToken ?? null;
+          if (idToken) {
+            try {
+              // Exchange id token for a Supabase session (requires Azure provider configured in Supabase)
+              // supabase-js typings accept { token }
+              const { error: signInError } = await supabase.auth.signInWithIdToken({ provider: 'azure', token: idToken as string });
+              if (signInError) console.warn('supabase signInWithIdToken error', signInError);
+            } catch (e) {
+              console.warn('supabase signInWithIdToken threw', e);
+            }
+          }
+
+        } catch (e) {
+          console.warn('MSAL -> Supabase session exchange failed', e);
+        }
+
+        // After attempting to establish a supabase session, try to load profile by email
         const profile = await loadProfileFromSupabase({ email: msalEmail });
         if (profile) {
           setUser(profile);
@@ -113,6 +143,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+        // Ensure a minimal users row exists so UI components can read display_name/email
+        try {
+          const fallbackDisplay = supUser.email ?? supUser.user_metadata?.full_name ?? supUser.user_metadata?.name ?? null;
+          // try to pull name parts from MSAL id token claims if available
+          const msalAccount = accounts?.[0] ?? null;
+          const givenName = (msalAccount as any)?.idTokenClaims?.given_name ?? supUser.user_metadata?.given_name ?? supUser.user_metadata?.first_name ?? null;
+          const surname = (msalAccount as any)?.idTokenClaims?.family_name ?? supUser.user_metadata?.family_name ?? supUser.user_metadata?.last_name ?? null;
+
+          // upsert silently to avoid blocking UI; include given_name/surname when available
+          const upsertPayload: any = { id: supUser.id, email: supUser.email, display_name: fallbackDisplay };
+          if (givenName) upsertPayload.given_name = givenName;
+          if (surname) upsertPayload.surname = surname;
+
+          await supabase.from('users').upsert(upsertPayload, { onConflict: 'id' });
+        } catch (e) {
+          // ignore upsert errors (roles/other constraints may apply)
+          console.debug('users upsert failed', e);
+        }
+
       // try to find by id or email
       const profile = await loadProfileFromSupabase({ authUserId: supUser.id, email: supUser.email });
       if (profile) {
@@ -121,10 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-  // If users table doesn't have a row for this auth user, include the supabase auth id
-  // so downstream components can use it directly.
-  setUser({ id: supUser.id, email: supUser.email ?? null, display_name: null, roles: null });
-  setLoading(false);
+      setUser(null);
+      setLoading(false);
     } catch (err) {
       console.warn('AuthProvider: refresh failed', err);
       setUser(null);
