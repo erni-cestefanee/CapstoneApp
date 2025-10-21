@@ -31,6 +31,7 @@ type Props = {
 export default function MasterEdit({ user, onClose, onSave }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [role, setRole] = useState((user.roles && user.roles[0]) || user.app_metadata?.role || '');
   const [editedLeaves, setEditedLeaves] = useState<LeaveBalances>({});
   const year = new Date().getFullYear();
@@ -81,18 +82,36 @@ export default function MasterEdit({ user, onClose, onSave }: Props) {
     setError(null);
     try {
       // attempt to read from leave_balances table for the current year (balances + allotted)
+      const defaults = {
+        holiday_balance: 0,
+        holiday_allotted: 15,
+        birthday_balance: 0,
+        birthday_allotted: 1,
+        sick_balance: 0,
+        sick_allotted: 15,
+        vacation_balance: 0,
+        vacation_allotted: 15,
+        parental_balance: 0,
+        parental_allotted: 130,
+      };
+
+      // use maybeSingle to avoid PostgREST coercion error when 0 rows are returned
       const { data, error } = await supabase
         .from('leave_balances')
         .select('holiday_balance,holiday_allotted,birthday_balance,birthday_allotted,sick_balance,sick_allotted,vacation_balance,vacation_allotted,parental_balance,parental_allotted,year')
         .eq('user_id', user.id)
         .eq('year', year as any)
-        .single();
+        .maybeSingle();
 
       if (error) {
+        // If there's an error (e.g. policy issues), fallback to defaults so admin can still edit
         console.warn('MasterEdit: failed to load leaves', error);
-        setEditedLeaves({});
+        setEditedLeaves(defaults);
+      } else if (!data) {
+        // no row for this user/year; initialize with defaults so fields are editable
+        setEditedLeaves(defaults);
       } else {
-  setEditedLeaves(data ?? {});
+        setEditedLeaves(data ?? defaults);
       }
     } catch (err: any) {
       console.error(err);
@@ -106,13 +125,44 @@ export default function MasterEdit({ user, onClose, onSave }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const updates: any = { id: user.id };
-      if (role) updates.role = role;
-      // include leaves that changed
-      for (const k of Object.keys(editedLeaves)) {
-        updates[k] = (editedLeaves as any)[k];
+
+      // 1) Persist leave_balances for this user/year (create if missing, otherwise update)
+      try {
+        const lb = { ...(editedLeaves as any), user_id: user.id, year } as Record<string, any>;
+
+        // check if a row exists
+        const { data: existing, error: checkErr } = await supabase
+          .from('leave_balances')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('year', year as any)
+          .maybeSingle();
+
+        if (checkErr) {
+          console.warn('MasterEdit: could not check existing leave_balances row', checkErr);
+          // continue and attempt insert (it may still fail due to RLS)
+        }
+
+        if (!existing) {
+          const { error: insertErr } = await supabase.from('leave_balances').insert(lb);
+          if (insertErr) throw insertErr;
+        } else {
+          const { error: updateErr } = await supabase.from('leave_balances').update(editedLeaves).eq('user_id', user.id).eq('year', year as any);
+          if (updateErr) throw updateErr;
+        }
+      } catch (dbErr: any) {
+        console.error('Failed to persist leave_balances row', dbErr);
+        setError(dbErr?.message ?? String(dbErr));
+        setLoading(false);
+        return;
       }
 
+      // show success message for leave_balances persistence
+      setSavedMessage('Leave balances saved');
+
+      // 2) Call onSave for user-level changes (role). We intentionally avoid resending leave_* fields to the admin function since we persisted them above.
+      const updates: any = { id: user.id };
+      if (role) updates.role = role;
       if (onSave) {
         await onSave(updates);
       }
@@ -208,6 +258,7 @@ export default function MasterEdit({ user, onClose, onSave }: Props) {
         </div>
 
         <footer className="masteredit-footer">
+          <div style={{ marginRight: 'auto', alignSelf: 'center', color: '#2e6aa0', fontWeight: 600 }}>{savedMessage ?? ''}</div>
           <button onClick={onClose} className="btn-cancel">Cancel</button>
           <button onClick={handleSave} className="btn-save" disabled={loading || hasNegative || hasExceeded}>{loading ? 'Saving…' : 'Save changes'}</button>
         </footer>

@@ -31,6 +31,7 @@ export default function Masterlist(): React.ReactElement {
   const [showMasterEdit, setShowMasterEdit] = useState(false);
 
   const ADMIN_FN_URL = import.meta.env.VITE_ADMIN_FN_URL as string | undefined;
+  const ADMIN_EDIT_LEAVE_URL = import.meta.env.VITE_ADMIN_EDIT_LEAVE_URL as string | undefined;
 
   useEffect(() => {
     loadUsers();
@@ -100,23 +101,144 @@ export default function Masterlist(): React.ReactElement {
       setError('No session token found.');
       return;
     }
-    if (!ADMIN_FN_URL) {
-      setError('Admin function URL not configured.');
+    // determine which admin endpoint to call
+    const hasLeaveFields = Object.keys(payload || {}).some((k) => k.endsWith('_balance') || k.endsWith('_allotted'));
+    const hasRole = payload.role !== undefined && payload.role !== null;
+    // We'll prefer to send leave updates to ADMIN_EDIT_LEAVE_URL and role updates to ADMIN_FN_URL.
+    // If ADMIN_FN_URL is not configured but ADMIN_EDIT_LEAVE_URL is, we fall back to sending the full payload to the leave URL
+    const canCallAdmin = !!ADMIN_FN_URL;
+    const canCallLeave = !!ADMIN_EDIT_LEAVE_URL;
+    if (!canCallAdmin && !canCallLeave) {
+      setError('Admin function URL(s) not configured. Set VITE_ADMIN_FN_URL or VITE_ADMIN_EDIT_LEAVE_URL in your .env');
       return;
     }
+    // helper to parse non-OK responses and surface useful messages
+    async function assertOk(res: Response) {
+      if (res.ok) return;
+      const txt = await res.text().catch(() => '');
+      // try to parse JSON body for structured error
+      try {
+        const json = JSON.parse(txt || '{}');
+        const msg = json?.message || json?.error || JSON.stringify(json);
+        console.error('Admin function returned error JSON:', json);
+        throw new Error(msg || res.statusText || `status ${res.status}`);
+      } catch (e) {
+        // not JSON
+        console.error('Admin function returned error text:', txt);
+        throw new Error(txt || res.statusText || `status ${res.status}`);
+      }
+    }
+
     try {
       setBusyId(payload.target_user ?? 'busy');
-      const res = await fetch(ADMIN_FN_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(txt || res.statusText || `status ${res.status}`);
+      // helper to try role update with fallback action names if server returns unknown action
+      async function tryRoleUpdateWithFallbacks(baseUrl: string, basePayload: Record<string, any>) {
+        const candidateActions = [basePayload.action, 'update', 'update_user', 'update_role', 'set_role', 'edit_user', 'edit'];
+        const targetKeys = ['target_user', 'user_id', 'id'];
+        const roleShapes: Array<'role' | 'roles'> = ['role', 'roles'];
+        let lastErr: any = null;
+
+        for (const act of candidateActions) {
+          for (const targetKey of targetKeys) {
+            for (const roleShape of roleShapes) {
+              // build candidate payload
+              const p: Record<string, any> = { action: act };
+              // set target identifier under the chosen key
+              p[targetKey] = basePayload.target_user ?? basePayload.user_id ?? basePayload.id;
+              if (roleShape === 'role') {
+                p.role = basePayload.role;
+              } else {
+                p.roles = Array.isArray(basePayload.role) ? basePayload.role : [basePayload.role];
+              }
+              // keep any additional minimal context if present (year etc.)
+              if (basePayload.year !== undefined) p.year = basePayload.year;
+
+              try {
+                console.debug('ADMIN: trying role update', baseUrl, { attempt: { action: act, targetKey, roleShape }, payload: p });
+                const r = await fetch(baseUrl, {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(p),
+                });
+                await assertOk(r);
+                console.debug('Role update succeeded with', { action: act, targetKey, roleShape });
+                return;
+              } catch (e: any) {
+                lastErr = e;
+                // If server explicitly says unknown action, try other action names; otherwise if 4xx/5xx, continue trying other shapes
+                if (typeof e.message === 'string' && e.message.toLowerCase().includes('unknown action')) {
+                  // try next action variation
+                  continue;
+                }
+                // for other messages (validation errors) continue trying other shapes, but log
+                console.warn('Role update attempt failed', { action: act, targetKey, roleShape, err: e?.message ?? e });
+                continue;
+              }
+            }
+          }
+        }
+        // exhausted attempts
+        throw lastErr ?? new Error('Role update failed after multiple attempts');
+      }
+      // If there are leave fields and we can call the leave-specific endpoint, call it first
+      if (hasLeaveFields && canCallLeave) {
+        // If we also have a separate admin endpoint for role updates, remove role from the leave payload to avoid duplication
+        const leavePayload = { ...payload };
+        if (hasRole && canCallAdmin) delete leavePayload.role;
+
+        console.debug('ADMIN: POST', ADMIN_EDIT_LEAVE_URL, { payload: leavePayload });
+        const resLeave = await fetch(ADMIN_EDIT_LEAVE_URL as string, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(leavePayload),
+        });
+        await assertOk(resLeave);
+
+        // If role change is requested and we have the admin endpoint, call it separately
+        if (hasRole) {
+          if (canCallAdmin) {
+            const rolePayload = { action: 'update_user', target_user: payload.target_user, role: payload.role };
+            console.debug('ADMIN: role update via admin fn', ADMIN_FN_URL, { payload: rolePayload });
+            await tryRoleUpdateWithFallbacks(ADMIN_FN_URL as string, rolePayload);
+          } else {
+            // No separate admin endpoint available; we already sent the leave endpoint without role only if canCallAdmin was true.
+            // If admin endpoint is missing, send full payload (including role) to the leave endpoint so the role is not dropped.
+            // when falling back to the leave endpoint to carry role, still attempt role update fallbacks
+            const rolePayload = { action: 'update_user', target_user: payload.target_user, role: payload.role };
+            // send full payload first (so leaves are updated), then ensure role is updated via fallbacks against the same endpoint
+            console.debug('ADMIN: POST full payload to leave endpoint', ADMIN_EDIT_LEAVE_URL, { payload });
+            const resFull = await fetch(ADMIN_EDIT_LEAVE_URL as string, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(payload),
+            });
+            await assertOk(resFull);
+            console.debug('ADMIN: attempting role update fallback on leave endpoint', ADMIN_EDIT_LEAVE_URL, { payload: rolePayload });
+            await tryRoleUpdateWithFallbacks(ADMIN_EDIT_LEAVE_URL as string, rolePayload);
+          }
+        }
+      } else {
+        // No leave fields, or no leave endpoint — send the payload to the admin endpoint (or the leave endpoint if only that is available)
+        const target = canCallAdmin ? (ADMIN_FN_URL as string) : (ADMIN_EDIT_LEAVE_URL as string);
+        console.debug('ADMIN: POST', target, { payload });
+        const res = await fetch(target, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        await assertOk(res);
       }
       await loadUsers();
       if (successMsg) alert(successMsg);
@@ -271,8 +393,12 @@ export default function Masterlist(): React.ReactElement {
           onClose={() => { setShowMasterEdit(false); setEditUser(null); }}
           onSave={async (updates: any) => {
             // updates contains id, role and leave fields
+            // If a role change is present, use the backend-supported `replace_roles` action and send a `roles` array.
             const payload: Record<string, any> = { action: 'update_user', target_user: updates.id };
-            if (updates.role) payload.role = updates.role;
+            if (updates.role) {
+              payload.action = 'replace_roles';
+              payload.roles = [updates.role];
+            }
             // copy leave balance and allotted fields
             ['holiday_balance','birthday_balance','sick_balance','vacation_balance','parental_balance','holiday_allotted','birthday_allotted','sick_allotted','vacation_allotted','parental_allotted'].forEach((k) => {
               if (updates[k] !== undefined) payload[k] = updates[k];
