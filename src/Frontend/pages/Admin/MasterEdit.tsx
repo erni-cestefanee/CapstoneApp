@@ -125,48 +125,78 @@ export default function MasterEdit({ user, onClose, onSave }: Props) {
     setLoading(true);
     setError(null);
     try {
+      // Client-side upsert for leave_balances and update users.roles.
+      const balances = {
+        user_id: user.id,
+        year,
+        holiday_balance: (editedLeaves as any).holiday_balance ?? 0,
+        holiday_allotted: (editedLeaves as any).holiday_allotted ?? 0,
+        birthday_balance: (editedLeaves as any).birthday_balance ?? 0,
+        birthday_allotted: (editedLeaves as any).birthday_allotted ?? 0,
+        sick_balance: (editedLeaves as any).sick_balance ?? 0,
+        sick_allotted: (editedLeaves as any).sick_allotted ?? 0,
+        vacation_balance: (editedLeaves as any).vacation_balance ?? 0,
+        vacation_allotted: (editedLeaves as any).vacation_allotted ?? 0,
+        parental_balance: (editedLeaves as any).parental_balance ?? 0,
+        parental_allotted: (editedLeaves as any).parental_allotted ?? 0,
+      };
 
-      // 1) Persist leave_balances for this user/year (create if missing, otherwise update)
-      try {
-        const lb = { ...(editedLeaves as any), user_id: user.id, year } as Record<string, any>;
+      // Some DBs may not have a unique constraint on (user_id, year), so avoid ON CONFLICT.
+      // Do a safe select => update if exists => insert if not.
+      const { data: existing, error: selectError } = await supabase
+        .from('leave_balances')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .eq('year', year as any)
+        .maybeSingle();
+      if (selectError) {
+        console.error('Leave balances select failed', selectError);
+        throw selectError;
+      }
 
-        // check if a row exists
-        const { data: existing, error: checkErr } = await supabase
+      if (existing) {
+        const { error: updateError } = await supabase
           .from('leave_balances')
-          .select('id')
+          .update({
+            holiday_balance: balances.holiday_balance,
+            holiday_allotted: balances.holiday_allotted,
+            birthday_balance: balances.birthday_balance,
+            birthday_allotted: balances.birthday_allotted,
+            sick_balance: balances.sick_balance,
+            sick_allotted: balances.sick_allotted,
+            vacation_balance: balances.vacation_balance,
+            vacation_allotted: balances.vacation_allotted,
+            parental_balance: balances.parental_balance,
+            parental_allotted: balances.parental_allotted,
+          })
           .eq('user_id', user.id)
-          .eq('year', year as any)
-          .maybeSingle();
-
-        if (checkErr) {
-          console.warn('MasterEdit: could not check existing leave_balances row', checkErr);
-          // continue and attempt insert (it may still fail due to RLS)
+          .eq('year', year as any);
+        if (updateError) {
+          console.error('Leave balances update failed', updateError);
+          throw updateError;
         }
-
-        if (!existing) {
-          const { error: insertErr } = await supabase.from('leave_balances').insert(lb);
-          if (insertErr) throw insertErr;
-        } else {
-          const { error: updateErr } = await supabase.from('leave_balances').update(editedLeaves).eq('user_id', user.id).eq('year', year as any);
-          if (updateErr) throw updateErr;
+      } else {
+        const { error: insertError } = await supabase
+          .from('leave_balances')
+          .insert(balances);
+        if (insertError) {
+          console.error('Leave balances insert failed', insertError);
+          throw insertError;
         }
-      } catch (dbErr: any) {
-        console.error('Failed to persist leave_balances row', dbErr);
-        setError(dbErr?.message ?? String(dbErr));
-        setLoading(false);
-        return;
       }
 
-      // show success message for leave_balances persistence
-      setSavedMessage('Leave balances saved');
-
-      // 2) Call onSave for user-level changes (role). We intentionally avoid resending leave_* fields to the admin function since we persisted them above.
-      const updates: any = { id: user.id };
-      if (role) updates.role = role;
-      if (onSave) {
-        await onSave(updates);
+      const rolesPayload = role ? { roles: [role] } : { roles: null };
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update(rolesPayload)
+        .eq('id', user.id);
+      if (userUpdateError) {
+        console.error('User role update failed', userUpdateError);
+        throw userUpdateError;
       }
 
+      setSavedMessage('Leave balances and role updated');
+      if (onSave) await onSave({ id: user.id, role });
       onClose();
     } catch (err: any) {
       console.error('MasterEdit save failed', err);
