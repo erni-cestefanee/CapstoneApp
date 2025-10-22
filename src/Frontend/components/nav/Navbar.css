@@ -105,7 +105,7 @@
 }
 
 .nav-btn{
-    background: transparent;
+    background: white;
     border: 1.5px solid #004693;
     color: #0b3b66; /* use brand color for buttons on white */
     padding: 7px 30px;
@@ -129,7 +129,7 @@
 }
 
 .nav-btn.logout{
-    background: none;
+    background: white;
     color: #0b3b66;
     border: 1.5px solid #004693;
 }
