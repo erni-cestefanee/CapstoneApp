@@ -78,7 +78,7 @@ export default function EmployeeNavbar({ onLogout, userName, userEmail }: Props)
         <div className="logo">
           <img src={ERNILogo} alt="ERNI" className="erni-logo" />
           <div className="welcome-text">{display}</div>
-          <div style={{ marginTop: 8, fontSize: 13, color: '#fff', opacity: 0.95 }} aria-hidden>
+          <div style={{ marginTop: '-14px', fontFamily: 'Lexend, sans-serif', fontWeight: 300, fontSize: '13px', color: '#0b3b66', opacity: 0.95 }} aria-hidden>
             Employee
           </div>
         </div>

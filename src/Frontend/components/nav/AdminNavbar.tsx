@@ -78,7 +78,7 @@ export default function AdminNavbar({ onLogout, userName, userEmail }: Props) {
         <div className="logo">
           <img src={ERNILogo} alt="ERNI" className="erni-logo" />
           <div className="welcome-text">{display}</div>
-          <div style={{ marginTop: 8, fontSize: 13, color: '#fff', opacity: 0.95 }} aria-hidden>
+          <div style={{ marginTop: '-15px', marginBottom: '25px', fontSize: '13px', color: '#0b3b66', opacity: 0.95 }} aria-hidden>
             Admin
           </div>
         </div>
